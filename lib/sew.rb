@@ -16,17 +16,18 @@ class Sew
 
   def self.build
     clean
-    Dir.mkdir(BUILD_DIR)
     pages = Dir["[^_]*.mote"].map do |template|
       Hash.new.tap do |page|
-        page[:id] = File.basename(template, ".mote")
+        page[:id], page[:locale] = File.basename(template, ".mote").split(".")
         page[:path] = "%s.html" % page[:id]
-        page[:destination] = "./%s/%s" % [BUILD_DIR, page[:path]]
+        page[:destination] = "./%s/%s/%s" % [BUILD_DIR, page[:locale], page[:path]]
         frontmatter, page[:body] = File.read(template).match(FILE_REGEX)[1..2]
         page.merge!(YAML.load(frontmatter))
       end
     end
     site = OpenStruct.new(pages: JSON.parse(pages.to_json, object_class: OpenStruct))
+    site.pages.map(&:locale).uniq.each {|dir|
+      FileUtils.mkpath "./%s/%s" % [BUILD_DIR, dir] }
     site.pages.each do |page|
       File.open(page.destination, "w") do |file|
         file.write Context.new(site, page).render
@@ -64,7 +65,12 @@ class Sew
     end
 
     def partial(template)
-      mote(File.read(sprintf("%s.mote", template)))
+      localized = sprintf("%s.%s.mote", template, @data.page.locale)
+      if File.exist?(localized)
+        mote(File.read(localized))
+      else
+        mote(File.read(sprintf("%s.mote", template)))
+      end
     end
   end
 end
