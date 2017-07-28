@@ -13,4 +13,7 @@ Gem::Specification.new do |s|
     "lib/**/*.rb",
     "*.gemspec"
   ]
+
+  s.add_dependency "mote", "1.2.0"
+  s.add_development_dependency "cutest"
 end
