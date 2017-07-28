@@ -1,5 +1,7 @@
 require "fileutils"
+require "ostruct"
 require "webrick"
+require "json"
 require "mote"
 require "yaml"
 
@@ -15,10 +17,19 @@ class Sew
   def self.build
     clean
     Dir.mkdir(BUILD_DIR)
-    Dir["[^_]*.mote"].each do |template|
-      filename = "./%s/%s.html" % [BUILD_DIR, File.basename(template, ".mote")]
-      File.open(filename, "w") do |file|
-        file.write Context.new(*File.read(template).match(FILE_REGEX)[1..2]).render
+    pages = Dir["[^_]*.mote"].map do |template|
+      Hash.new.tap do |page|
+        page[:id] = File.basename(template, ".mote")
+        page[:path] = "%s.html" % page[:id]
+        page[:destination] = "./%s/%s" % [BUILD_DIR, page[:path]]
+        frontmatter, page[:body] = File.read(template).match(FILE_REGEX)[1..2]
+        page.merge!(YAML.load(frontmatter))
+      end
+    end
+    site = OpenStruct.new(pages: JSON.parse(pages.to_json, object_class: OpenStruct))
+    site.pages.each do |page|
+      File.open(page.destination, "w") do |file|
+        file.write Context.new(site, page).render
       end
     end
   end
@@ -38,9 +49,10 @@ class Sew
   class Context
     attr_reader :data
 
-    def initialize(frontmatter, content)
-      @data = YAML.load(frontmatter)
-      @data.merge!(content: mote(content))
+    def initialize(site, page)
+      @data = site
+      @data.page = page
+      @data.content = mote(page.body)
     end
 
     def render
@@ -48,7 +60,7 @@ class Sew
     end
 
     def mote(content)
-      Mote.parse(content, self, data.keys)[data]
+      Mote.parse(content, self, data.each_pair.map(&:first))[data]
     end
 
     def partial(template)
