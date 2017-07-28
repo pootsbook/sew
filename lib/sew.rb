@@ -51,6 +51,11 @@ class Sew
     attr_reader :data
 
     def initialize(site, page)
+      if File.exist?(file = File.join(Dir.pwd, 'helper.rb'))
+        require file
+        extend Sew::Helper
+      end
+
       @data = site
       @data.page = page
       @data.content = mote(page.body)
