@@ -1,0 +1,42 @@
+#!/usr/bin/env ruby
+
+help = <<-EOS
+SEW(1)
+
+NAME
+      sew -- Static, Elegant Websites
+
+SYNOPSIS
+      sew COMMAND
+
+DESCRIPTION
+      Use this command line tool to build static websites. The
+      following commands are available:
+
+      build
+          build the site, placing in the './build' directory.
+
+      clean
+          remove the './build' directory.
+
+      serve
+          serve the './build' directory after a fresh build. 
+
+AUTHOR
+      Philip Poots
+
+SEE ALSO
+      https://github.com/pootsbook/sew
+EOS
+
+require "sew"
+
+COMMANDS = %w(build clean serve)
+command = ARGV.shift
+
+unless COMMANDS.include?(arg)
+  puts help
+  exit
+end
+
+Sew.send(arg)

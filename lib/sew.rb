@@ -6,7 +6,7 @@ require "mote"
 require "yaml"
 
 class Sew
-  VERSION = "0.0.0"
+  VERSION = "0.0.1"
   BUILD_DIR = "build"
   FILE_REGEX = /\A---\n(.+?)\n---\n(.*)/m
 
@@ -19,18 +19,24 @@ class Sew
     pages = Dir["[^_]*.mote"].map do |template|
       Hash.new.tap do |page|
         page[:id], page[:locale] = File.basename(template, ".mote").split(".")
-        page[:path] = "%s.html" % page[:id]
-        page[:destination] = "./%s/%s/%s" % [BUILD_DIR, page[:locale], page[:path]]
         frontmatter, page[:body] = File.read(template).match(FILE_REGEX)[1..2]
         page.merge!(YAML.load(frontmatter))
+        page[:path] = "%s.html" % (page["path"]&.tr(".", "/") || page[:id])
+        page[:destination] = "./%s/%s/%s" % [BUILD_DIR, page[:locale], page[:path]]
+        page[:destination_dir] = page[:destination].split("/")[0..-2].join("/") # build this up gradually using existing info
       end
     end
-    site = OpenStruct.new(pages: JSON.parse(pages.to_json, object_class: OpenStruct))
-    site.pages.map(&:locale).uniq.each {|dir|
-      FileUtils.mkpath "./%s/%s" % [BUILD_DIR, dir] }
+    data = Hash.new.tap do |dat|
+      Dir["*.yml"].map do |file|
+        dat[File.basename(file, ".yml")] = YAML.load_file(file)
+      end
+    end
+    site = OpenStruct.new(JSON.parse({ pages: pages, data: data }.to_json, object_class: OpenStruct))
+    context = Context.new(site)
+    site.pages.map(&:destination_dir).uniq.each(&FileUtils.method(:mkpath))
     site.pages.each do |page|
       File.open(page.destination, "w") do |file|
-        file.write Context.new(site, page).render
+        file.write context.render(page)
       end
     end
   end
@@ -48,29 +54,30 @@ class Sew
   end
 
   class Context
-    attr_reader :data
+    attr_reader :site
 
-    def initialize(site, page)
+    def initialize(site)
       if File.exist?(file = File.join(Dir.pwd, 'helper.rb'))
         require file
         extend Sew::Helper
       end
 
-      @data = site
-      @data.page = page
-      @data.content = mote(page.body)
+      @site= site
     end
 
-    def render
+    def render(page)
+      @site.page = page
+      @site.content = mote(page.body)
+
       partial("_layout")
     end
 
     def mote(content)
-      Mote.parse(content, self, data.each_pair.map(&:first))[data]
+      Mote.parse(content, self, site.each_pair.map(&:first))[site]
     end
 
     def partial(template)
-      localized = sprintf("%s.%s.mote", template, @data.page.locale)
+      localized = sprintf("%s.%s.mote", template, site.page.locale)
       if File.exist?(localized)
         mote(File.read(localized))
       else

@@ -8,12 +8,12 @@ Gem::Specification.new do |s|
   s.authors     = ["Philip Poots"]
   s.email       = ["philip.poots@gmail.com"]
   s.homepage    = "http://github.com/pootsbook/sew"
+  s.license     = "MIT"
   s.files = Dir[
     "LICENSE",
     "lib/**/*.rb",
     "*.gemspec"
   ]
-
+  s.executables.push("sew")
   s.add_dependency "mote", "1.2.0"
-  s.add_development_dependency "cutest"
 end
