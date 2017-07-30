@@ -6,7 +6,7 @@ require "mote"
 require "yaml"
 
 class Sew
-  VERSION = "0.0.1"
+  VERSION = "0.0.2"
   BUILD_DIR = "build"
   FILE_REGEX = /\A---\n(.+?)\n---\n(.*)/m
 

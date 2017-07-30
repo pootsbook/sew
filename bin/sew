@@ -32,11 +32,12 @@ EOS
 require "sew"
 
 COMMANDS = %w(build clean serve)
+
 command = ARGV.shift
 
-unless COMMANDS.include?(arg)
+unless COMMANDS.include?(command)
   puts help
   exit
 end
 
-Sew.send(arg)
+Sew.send(command)
