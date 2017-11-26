@@ -6,9 +6,12 @@ require "mote"
 require "yaml"
 
 class Sew
-  VERSION = "0.0.2"
+  VERSION = "0.0.3"
   BUILD_DIR = "build"
   FILE_REGEX = /\A---\n(.+?)\n---\n(.*)/m
+  PATH_MAP = Hash.new do |hash, key|
+    key == "index" ? "/" : "/%s/" % key.tr(".", "/")
+  end
 
   def self.version
     puts VERSION
@@ -18,12 +21,14 @@ class Sew
     clean
     pages = Dir["[^_]*.mote"].map do |template|
       Hash.new.tap do |page|
-        page[:id], page[:locale] = File.basename(template, ".mote").split(".")
+        parts = File.basename(template, ".mote").split(".")
+        page[:locale] = parts.pop.intern
+        page[:id] = parts.join(".")
         frontmatter, page[:body] = File.read(template).match(FILE_REGEX)[1..2]
         page.merge!(YAML.load(frontmatter))
-        page[:path] = "%s.html" % (page["path"]&.tr(".", "/") || page[:id])
-        page[:destination] = "./%s/%s/%s" % [BUILD_DIR, page[:locale], page[:path]]
-        page[:destination_dir] = page[:destination].split("/")[0..-2].join("/") # build this up gradually using existing info
+        page[:path] = PATH_MAP[(page.delete("path") || page[:id])]
+        page[:destination_dir] = ("./%s/%s" % [BUILD_DIR, page[:locale]]) + page[:path]
+        page[:destination] = page[:destination_dir] + "index.html"
       end
     end
     data = Hash.new.tap do |dat|
@@ -39,6 +44,7 @@ class Sew
         file.write context.render(page)
       end
     end
+    context.after_build
   end
 
   def self.clean
@@ -62,7 +68,7 @@ class Sew
         extend Sew::Helper
       end
 
-      @site= site
+      @site = site
     end
 
     def render(page)
@@ -83,6 +89,9 @@ class Sew
       else
         mote(File.read(sprintf("%s.mote", template)))
       end
+    end
+
+    def after_build
     end
   end
 end
