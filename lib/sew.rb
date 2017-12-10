@@ -6,8 +6,8 @@ require "mote"
 require "yaml"
 
 class Sew
-  VERSION = "0.0.3"
-  BUILD_DIR = "build"
+  VERSION = "0.0.4"
+  BUILD_DIR = ENV["SITE_DIR"] || "build"
   FILE_REGEX = /\A---\n(.+?)\n---\n(.*)/m
   PATH_MAP = Hash.new do |hash, key|
     key == "index" ? "/" : "/%s/" % key.tr(".", "/")
