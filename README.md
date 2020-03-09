@@ -84,7 +84,9 @@ index.nl.html               # /nl/index.html
 portfolio.logo-work.en.html # /en/portfolio/logo-work/index.html
 ```
 
-Page attributes are accessible via the `page` object, e.g. `page.title`.
+Page attributes are accessible via the `page` object, e.g. `page.title`.  
+Data attributes are accessible via the `data` object, e.g. `data.articles`.  
+The rendered page body is accessible via `content`.
 
 ```
 <!-- _layout.mote -->
