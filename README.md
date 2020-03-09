@@ -88,6 +88,7 @@ Page attributes are accessible via the `page` object, e.g. `page.title`.
 
 ```
 <!-- _layout.mote -->
+<!DOCTYPE html>
 <html lang="{{page.locale}}">
   <head>
   <meta charset="utf-8">
