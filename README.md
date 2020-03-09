@@ -78,8 +78,32 @@ Sew is designed to be used with only one directory.
 ```
 _layout.mote                # layout
 _header.mote                # partial
-articles.yml                # data file, accessible via 'data.people'
+articles.yml                # data file, accessible via 'data.articles'
 index.en.html               # /en/index.html
 index.nl.html               # /nl/index.html
 portfolio.logo-work.en.html # /en/portfolio/logo-work/index.html
+```
+
+Page attributes are accessible via the `page` object, e.g. `page.title`.
+
+```
+<!-- _layout.mote -->
+<html lang="{{page.locale}}">
+  <head>
+  <meta charset="utf-8">
+    <title>{{page.title}}</title>
+    {{ partial("_header") }}
+  </head>
+  <body>
+    <div class="container">
+      {{content}}
+    </div>
+
+    <ul>
+% data.articles.each do |article|
+  <li>{{article.title}}</li>
+% end
+    </ul>
+  </body>
+</html>
 ```
